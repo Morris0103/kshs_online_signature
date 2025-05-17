@@ -2,8 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>高雄中學請假簽名系統</title>
+  <title>高效能線上簽名產生器</title>
   <style>
     body {
       font-family: "Microsoft JhengHei", sans-serif;
@@ -11,28 +10,36 @@
       padding: 20px;
       background-color: #f4f4f4;
     }
-    #canvas-container {
+
+    .canvas-wrapper {
       width: 100%;
       max-width: 500px;
+      aspect-ratio: 236 / 79;
       margin: 0 auto;
-    }
-    canvas {
-      width: 100%;
-      height: 200px;
+      background: white;
       border: 2px dashed #888;
       border-radius: 8px;
-      background-color: white;
-      touch-action: none;
-      display: block;
+      position: relative;
     }
+
+    canvas {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      touch-action: none;
+    }
+
     button {
       margin: 10px 5px;
-      padding: 12px 24px;
-      font-size: 18px;
+      padding: 10px 20px;
+      font-size: 16px;
       border-radius: 8px;
       border: none;
       cursor: pointer;
     }
+
     #clearBtn { background-color: #f44336; color: white; }
     #saveBtn { background-color: #4CAF50; color: white; }
     #undoBtn { background-color: #2196F3; color: white; }
@@ -41,7 +48,7 @@
 </head>
 <body>
   <h2>第一步：在格子內簽名，若簽壞了可點清除簽名</h2>
-  <div id="canvas-container">
+  <div class="canvas-wrapper">
     <canvas id="signatureCanvas"></canvas>
   </div>
   <br />
@@ -49,8 +56,7 @@
   <button id="undoBtn">復原</button>
   <br /><br />
 
-  <h2>第二步：儲存簽名圖檔</h2>
-  <p>簽好後，點擊下方「下載簽名」按鈕</p>
+  <h2>第二步：儲存簽名圖檔（解析度固定為 236 x 79）</h2>
   <button id="saveBtn">下載簽名</button>
 
   <h2>⬆️ 第三步：回傳至 Google 表單</h2>
@@ -62,50 +68,27 @@
   <script>
     const canvas = document.getElementById("signatureCanvas");
     const ctx = canvas.getContext("2d");
+    let paths = [], currentPath = [], drawing = false;
 
-    let drawing = false;
-    let paths = [];
-    let currentPath = [];
-
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 2;
-
-    function resizeCanvas() {
+    function resizeCanvasDisplay() {
       const ratio = window.devicePixelRatio || 1;
-      const container = document.getElementById("canvas-container");
-      const width = container.offsetWidth;
-      canvas.width = width * ratio;
-      canvas.height = 200 * ratio;
-      canvas.style.width = width + "px";
-      canvas.style.height = "200px";
-      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-      redraw(); // 重畫一次
-    }
+      const wrapper = document.querySelector(".canvas-wrapper");
+      const width = wrapper.offsetWidth;
+      const height = wrapper.offsetHeight;
 
-    window.addEventListener("resize", resizeCanvas);
-    resizeCanvas();
+      canvas.width = width * ratio;
+      canvas.height = height * ratio;
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      redraw();
+    }
 
     function getPos(e) {
       const rect = canvas.getBoundingClientRect();
       if (e.touches) e = e.touches[0];
       return {
-        x: (e.clientX - rect.left),
-        y: (e.clientY - rect.top)
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
       };
-    }
-
-    function redraw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      for (const path of paths) {
-        ctx.beginPath();
-        for (let i = 0; i < path.length; i++) {
-          const pt = path[i];
-          i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y);
-        }
-        ctx.stroke();
-      }
     }
 
     function startDraw(e) {
@@ -113,16 +96,18 @@
       currentPath = [];
       const pos = getPos(e);
       currentPath.push(pos);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
     }
 
     function draw(e) {
       if (!drawing) return;
       const pos = getPos(e);
-      const lastPos = currentPath[currentPath.length - 1];
+      const last = currentPath[currentPath.length - 1];
       currentPath.push(pos);
 
       ctx.beginPath();
-      ctx.moveTo(lastPos.x, lastPos.y);
+      ctx.moveTo(last.x, last.y);
       ctx.lineTo(pos.x, pos.y);
       ctx.stroke();
     }
@@ -136,21 +121,36 @@
       currentPath = [];
     }
 
-    // Mouse & touch events
+    function redraw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = "black";
+      ctx.lineWidth = 2;
+      for (const path of paths) {
+        ctx.beginPath();
+        for (let i = 0; i < path.length; i++) {
+          const pt = path[i];
+          i === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.stroke();
+      }
+    }
+
+    // 綁定事件
     canvas.addEventListener("mousedown", startDraw);
     canvas.addEventListener("mousemove", draw);
     canvas.addEventListener("mouseup", stopDraw);
     canvas.addEventListener("mouseleave", stopDraw);
     canvas.addEventListener("touchstart", startDraw, { passive: true });
-    canvas.addEventListener("touchmove", (e) => {
-      e.preventDefault();
-      draw(e);
-    }, { passive: false });
+    canvas.addEventListener("touchmove", (e) => { e.preventDefault(); draw(e); }, { passive: false });
     canvas.addEventListener("touchend", stopDraw);
 
+    // 清除與復原
     document.getElementById("clearBtn").addEventListener("click", () => {
       paths = [];
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      currentPath = [];
+      redraw();
     });
 
     document.getElementById("undoBtn").addEventListener("click", () => {
@@ -158,12 +158,45 @@
       redraw();
     });
 
+    // 儲存為固定解析度的圖像
     document.getElementById("saveBtn").addEventListener("click", () => {
+      const fixedWidth = 236;
+      const fixedHeight = 79;
+
+      const exportCanvas = document.createElement("canvas");
+      exportCanvas.width = fixedWidth;
+      exportCanvas.height = fixedHeight;
+      const exportCtx = exportCanvas.getContext("2d");
+
+      exportCtx.lineCap = "round";
+      exportCtx.lineJoin = "round";
+      exportCtx.strokeStyle = "black";
+      exportCtx.lineWidth = 2;
+
+      // 將路徑轉換至固定大小畫布
+      const wrapper = document.querySelector(".canvas-wrapper");
+      const scaleX = fixedWidth / wrapper.offsetWidth;
+      const scaleY = fixedHeight / wrapper.offsetHeight;
+
+      for (const path of paths) {
+        exportCtx.beginPath();
+        for (let i = 0; i < path.length; i++) {
+          const pt = path[i];
+          const x = pt.x * scaleX;
+          const y = pt.y * scaleY;
+          i === 0 ? exportCtx.moveTo(x, y) : exportCtx.lineTo(x, y);
+        }
+        exportCtx.stroke();
+      }
+
       const link = document.createElement("a");
       link.download = "signature.png";
-      link.href = canvas.toDataURL("image/png");
+      link.href = exportCanvas.toDataURL("image/png");
       link.click();
     });
+
+    window.addEventListener("resize", resizeCanvasDisplay);
+    resizeCanvasDisplay();
   </script>
 </body>
 </html>

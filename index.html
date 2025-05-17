@@ -2,17 +2,24 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>高雄中學請假簽名系統</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>高效能線上簽名產生器</title>
   <style>
     body {
       font-family: "Microsoft JhengHei", sans-serif;
-      text-align: center;
-      padding: 20px;
+      padding: 10px;
+      margin: 0;
       background-color: #f4f4f4;
+      text-align: center;
+    }
+
+    h2 {
+      font-size: 1.1rem;
+      margin-top: 1.5em;
     }
 
     .canvas-wrapper {
-      width: 100%;
+      width: 95vw;
       max-width: 500px;
       aspect-ratio: 236 / 79;
       margin: 0 auto;
@@ -33,11 +40,13 @@
 
     button {
       margin: 10px 5px;
-      padding: 10px 20px;
-      font-size: 16px;
+      padding: 12px 20px;
+      font-size: 1rem;
       border-radius: 8px;
       border: none;
       cursor: pointer;
+      width: 90%;
+      max-width: 300px;
     }
 
     #clearBtn { background-color: #f44336; color: white; }
@@ -47,20 +56,18 @@
   </style>
 </head>
 <body>
-  <h2>第一步：在格子內簽名，若簽壞了可點清除簽名</h2>
+  <h2>第一步：請在下方簽名，若簽壞可清除</h2>
   <div class="canvas-wrapper">
     <canvas id="signatureCanvas"></canvas>
   </div>
-  <br />
+
   <button id="clearBtn">清除簽名</button>
   <button id="undoBtn">復原</button>
-  <br /><br />
 
-  <h2>第二步：儲存簽名圖檔（解析度固定為 236 x 79）</h2>
+  <h2>第二步：下載簽名圖檔</h2>
   <button id="saveBtn">下載簽名</button>
 
-  <h2>⬆️ 第三步：回傳至 Google 表單</h2>
-  <p>完成簽名並下載後，點擊下方按鈕開啟 Google 表單，上傳圖片檔案。</p>
+  <h2>第三步：前往上傳簽名圖檔</h2>
   <a href="https://docs.google.com/forms/d/e/1FAIpQLSc6ItA432bbJv3Q4A0-M-8AqSNqoUnjgNpfp-TQWmII7uvbmw/viewform?usp=dialog" target="_blank">
     <button id="formBtn">前往上傳表單</button>
   </a>
@@ -137,7 +144,6 @@
       }
     }
 
-    // 綁定事件
     canvas.addEventListener("mousedown", startDraw);
     canvas.addEventListener("mousemove", draw);
     canvas.addEventListener("mouseup", stopDraw);
@@ -146,7 +152,6 @@
     canvas.addEventListener("touchmove", (e) => { e.preventDefault(); draw(e); }, { passive: false });
     canvas.addEventListener("touchend", stopDraw);
 
-    // 清除與復原
     document.getElementById("clearBtn").addEventListener("click", () => {
       paths = [];
       currentPath = [];
@@ -158,7 +163,6 @@
       redraw();
     });
 
-    // 儲存為固定解析度的圖像
     document.getElementById("saveBtn").addEventListener("click", () => {
       const fixedWidth = 236;
       const fixedHeight = 79;
@@ -173,7 +177,6 @@
       exportCtx.strokeStyle = "black";
       exportCtx.lineWidth = 2;
 
-      // 將路徑轉換至固定大小畫布
       const wrapper = document.querySelector(".canvas-wrapper");
       const scaleX = fixedWidth / wrapper.offsetWidth;
       const scaleY = fixedHeight / wrapper.offsetHeight;

@@ -2,8 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <!-- 加入 meta viewport 以確保裝置自適應 -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>高雄中學請假簽名系統</title>
   <style>
     body {
@@ -12,32 +11,24 @@
       padding: 20px;
       background-color: #f4f4f4;
     }
-    .header {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      font-size: 32px;
-      font-weight: bold;
-    }
-    /* 因為 header 為絕對定位，故讓 canvas-container 加上 margin-top 避免被遮擋 */
-    .canvas-container {
+    #canvas-container {
       width: 100%;
       max-width: 500px;
-      margin: 80px auto 0;
+      margin: 0 auto;
     }
     canvas {
       width: 100%;
-      aspect-ratio: 236 / 79;
+      height: 200px;
       border: 2px dashed #888;
       border-radius: 8px;
       background-color: white;
-      cursor: crosshair;
       touch-action: none;
+      display: block;
     }
     button {
       margin: 10px 5px;
-      padding: 10px 20px;
-      font-size: 16px;
+      padding: 12px 24px;
+      font-size: 18px;
       border-radius: 8px;
       border: none;
       cursor: pointer;
@@ -46,33 +37,11 @@
     #saveBtn { background-color: #4CAF50; color: white; }
     #undoBtn { background-color: #2196F3; color: white; }
     #formBtn { background-color: #FF9800; color: white; }
-    
-    /* Media query 為了在小尺寸裝置上調整字體與元素大小 */
-    @media (max-width: 600px) {
-      .header {
-        font-size: 40px;
-      }
-      h2 {
-        font-size: 26px;
-      }
-      p {
-        font-size: 20px;
-      }
-      button {
-        font-size: 18px;
-        padding: 12px 24px;
-      }
-      canvas {
-        border: 3px dashed #888;
-      }
-    }
   </style>
 </head>
 <body>
-  <div class="header">高雄中學請假簽名系統</div>
-
   <h2>第一步：在格子內簽名，若簽壞了可點清除簽名</h2>
-  <div class="canvas-container">
+  <div id="canvas-container">
     <canvas id="signatureCanvas"></canvas>
   </div>
   <br />
@@ -103,23 +72,28 @@
     ctx.strokeStyle = "black";
     ctx.lineWidth = 2;
 
-    function adjustCanvasForHiDPI() {
+    function resizeCanvas() {
       const ratio = window.devicePixelRatio || 1;
-      const width = canvas.clientWidth;
-      const height = canvas.clientHeight;
+      const container = document.getElementById("canvas-container");
+      const width = container.offsetWidth;
       canvas.width = width * ratio;
-      canvas.height = height * ratio;
-      ctx.scale(ratio, ratio);
-      redraw();
+      canvas.height = 200 * ratio;
+      canvas.style.width = width + "px";
+      canvas.style.height = "200px";
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      redraw(); // 重畫一次
     }
-    
-    window.addEventListener("resize", adjustCanvasForHiDPI);
-    window.addEventListener("load", adjustCanvasForHiDPI);
+
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
 
     function getPos(e) {
       const rect = canvas.getBoundingClientRect();
       if (e.touches) e = e.touches[0];
-      return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      return {
+        x: (e.clientX - rect.left),
+        y: (e.clientY - rect.top)
+      };
     }
 
     function redraw() {
@@ -139,19 +113,14 @@
       currentPath = [];
       const pos = getPos(e);
       currentPath.push(pos);
-      ctx.beginPath();
-      ctx.moveTo(pos.x, pos.y);
     }
 
-    let lastDrawTime = 0;
     function draw(e) {
-      const now = Date.now();
-      if (now - lastDrawTime < 10) return;
-      lastDrawTime = now;
       if (!drawing) return;
       const pos = getPos(e);
       const lastPos = currentPath[currentPath.length - 1];
       currentPath.push(pos);
+
       ctx.beginPath();
       ctx.moveTo(lastPos.x, lastPos.y);
       ctx.lineTo(pos.x, pos.y);
@@ -167,11 +136,11 @@
       currentPath = [];
     }
 
+    // Mouse & touch events
     canvas.addEventListener("mousedown", startDraw);
     canvas.addEventListener("mousemove", draw);
     canvas.addEventListener("mouseup", stopDraw);
     canvas.addEventListener("mouseleave", stopDraw);
-
     canvas.addEventListener("touchstart", startDraw, { passive: true });
     canvas.addEventListener("touchmove", (e) => {
       e.preventDefault();
@@ -181,7 +150,6 @@
 
     document.getElementById("clearBtn").addEventListener("click", () => {
       paths = [];
-      currentPath = [];
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     });
 
@@ -191,35 +159,9 @@
     });
 
     document.getElementById("saveBtn").addEventListener("click", () => {
-      const fixedWidth = 236;
-      const fixedHeight = 79;
-      const offCanvas = document.createElement("canvas");
-      offCanvas.width = fixedWidth;
-      offCanvas.height = fixedHeight;
-      const offCtx = offCanvas.getContext("2d");
-
-      offCtx.lineCap = "round";
-      offCtx.lineJoin = "round";
-      offCtx.strokeStyle = "black";
-
-      const clientW = canvas.clientWidth;
-      const scaleFactor = fixedWidth / clientW;
-      offCtx.lineWidth = 2 * scaleFactor;
-
-      for (const path of paths) {
-        offCtx.beginPath();
-        for (let i = 0; i < path.length; i++) {
-          const pt = path[i];
-          const x = pt.x * scaleFactor;
-          const y = pt.y * scaleFactor;
-          i === 0 ? offCtx.moveTo(x, y) : offCtx.lineTo(x, y);
-        }
-        offCtx.stroke();
-      }
-
       const link = document.createElement("a");
       link.download = "signature.png";
-      link.href = offCanvas.toDataURL("image/png");
+      link.href = canvas.toDataURL("image/png");
       link.click();
     });
   </script>

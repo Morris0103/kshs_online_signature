@@ -2,6 +2,8 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
+  <!-- 加入 meta viewport 以確保裝置自適應 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>高雄中學請假簽名系統</title>
   <style>
     body {
@@ -14,13 +16,14 @@
       position: absolute;
       top: 10px;
       left: 10px;
-      font-size: 32px; /* 調大標題字體 */
+      font-size: 32px;
       font-weight: bold;
     }
+    /* 因為 header 為絕對定位，故讓 canvas-container 加上 margin-top 避免被遮擋 */
     .canvas-container {
       width: 100%;
       max-width: 500px;
-      margin: auto;
+      margin: 80px auto 0;
     }
     canvas {
       width: 100%;
@@ -43,6 +46,26 @@
     #saveBtn { background-color: #4CAF50; color: white; }
     #undoBtn { background-color: #2196F3; color: white; }
     #formBtn { background-color: #FF9800; color: white; }
+    
+    /* Media query 為了在小尺寸裝置上調整字體與元素大小 */
+    @media (max-width: 600px) {
+      .header {
+        font-size: 40px;
+      }
+      h2 {
+        font-size: 26px;
+      }
+      p {
+        font-size: 20px;
+      }
+      button {
+        font-size: 18px;
+        padding: 12px 24px;
+      }
+      canvas {
+        border: 3px dashed #888;
+      }
+    }
   </style>
 </head>
 <body>

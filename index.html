@@ -18,6 +18,11 @@
       margin-top: 1.5em;
     }
 
+    h3 {
+      font-size: 1rem;
+      margin: 1em 0 0.5em 0;
+    }
+
     .canvas-wrapper {
       width: 95vw;
       max-width: 500px;
@@ -52,7 +57,9 @@
     #clearBtn { background-color: #f44336; color: white; }
     #saveBtn { background-color: #4CAF50; color: white; }
     #undoBtn { background-color: #2196F3; color: white; }
-    #formBtn { background-color: #FF9800; color: white; }
+
+    .parentBtn { background-color: #FF9800; color: white; }
+    .teacherBtn { background-color: #9C27B0; color: white; }
   </style>
 </head>
 <body>
@@ -68,8 +75,15 @@
   <button id="saveBtn">下載簽名</button>
 
   <h2>第三步：前往上傳簽名圖檔</h2>
+
+  <h3>📌 家長請點選下方按鈕上傳簽名：</h3>
   <a href="https://docs.google.com/forms/d/e/1FAIpQLSc6ItA432bbJv3Q4A0-M-8AqSNqoUnjgNpfp-TQWmII7uvbmw/viewform?usp=dialog" target="_blank">
-    <button id="formBtn">前往上傳表單</button>
+    <button class="parentBtn">前往家長上傳表單</button>
+  </a>
+
+  <h3>📌 導師請點選下方按鈕上傳簽名：</h3>
+  <a href="https://docs.google.com/forms/d/e/1FAIpQLSdj8tcr8A7uhsHTRzL9tkLZZAhZS6glEda6gr930_n_gUOZRw/viewform?usp=dialog" target="_blank">
+    <button class="teacherBtn">前往導師上傳表單</button>
   </a>
 
   <script>
